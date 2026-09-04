@@ -1,0 +1,12 @@
+# The audit itself uses only the Python standard library PLUS the competition SDK.
+#
+#   aicomp_sdk        — the "AI Agent Security — Multi-Step Tool Attacks" SDK (provides
+#                       core.predicates.eval_predicates, core.cells.cell_signature,
+#                       guardrails.optimal.Guardrail). It is NOT on PyPI; obtain it from the
+#                       competition and point the tools at it with:  export AAS_SDK=/path/to/sdk
+#
+# Optional — only for the live check in faithful_measure.py (needs a GPU + the GGUF models):
+#   llama-cpp-python
+#   huggingface_hub
+#
+# Tested on Python 3.10 and 3.11.
