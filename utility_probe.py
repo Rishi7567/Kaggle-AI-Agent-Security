@@ -79,5 +79,65 @@ def print_frontier(walls=WALLS):
     print("   'content-only' keeps ALL benign work at nearly the same security — taint is the utility cost, not the content check.")
     print("   A benchmark that scores only the left column rewards a guardrail no team could deploy. Score BOTH columns.")
 
+def plot(path="figures/security_utility.png"):
+    """Render the security x utility scatter (needs matplotlib; optional)."""
+    import os
+    import matplotlib; matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    rows = frontier()  # (name, sec, nsec, util, nutil)
+    FRONTIER = {"content-only", "taint+content(k=5)"}
+    ACCENT, MUTE, INK = "#2563eb", "#9ca3af", "#1f2937"
+
+    fig, ax = plt.subplots(figsize=(7.2, 5.0), dpi=150)
+    ax.set_facecolor("white"); fig.patch.set_facecolor("white")
+    ax.grid(True, color="#e5e7eb", linewidth=0.8, zorder=0)
+    for s in ("top", "right"): ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"): ax.spines[s].set_color("#d1d5db")
+
+    # the frontier line (connect the two non-dominated points)
+    fp = sorted([(u/nu, s/ns) for n, s, ns, u, nu in rows if n in FRONTIER])
+    ax.plot([p[0] for p in fp], [p[1] for p in fp], "--", color=ACCENT, lw=1.3, alpha=0.6, zorder=1)
+
+    # label offsets tuned to avoid collisions (x,y in axis units, va/ha)
+    OFF = {
+        "allow-all":          (0.0, -0.055, "center", "top"),
+        "content-only":       (-0.015, 0.045, "right", "bottom"),
+        "taint-only(k=5)":    (0.02, 0.0, "left", "center"),
+        "taint+content(k=5)": (-0.02, 0.0, "right", "center"),
+        "public-optimal":     (0.02, -0.01, "left", "center"),
+    }
+    for name, s, ns, u, nu in rows:
+        x, y = u/nu, s/ns
+        on_f = name in FRONTIER
+        ax.scatter([x], [y], s=150 if on_f else 80, color=ACCENT if on_f else MUTE,
+                   edgecolor="white", linewidth=1.2, zorder=3)
+        dx, dy, ha, va = OFF[name]
+        ax.annotate(f"{name}\n(sec {s}/{ns}, util {u}/{nu})", (x, y), (x+dx, y+dy),
+                    ha=ha, va=va, fontsize=8.5, color=INK,
+                    fontweight="bold" if on_f else "normal")
+
+    # the point of the figure
+    ax.annotate("the benchmark scored\nONLY this axis  →", (0.02, 0.5), fontsize=8.5,
+                color=ACCENT, style="italic", rotation=90, va="center", ha="center")
+    ax.set_xlabel("Benign tasks preserved  (utility)", fontsize=10, color=INK)
+    ax.set_ylabel("Attacks blocked  (security)", fontsize=10, color=INK)
+    ax.set_title("Guardrail classes on the security × utility plane", fontsize=12, color=INK, pad=12)
+    ax.set_xlim(-0.08, 1.15); ax.set_ylim(-0.12, 1.15)
+    ax.tick_params(colors="#6b7280", labelsize=8)
+    fig.text(0.5, -0.02,
+             "The 'winning' taint+content wall is the max-security corner but pays the largest utility cost; "
+             "content-only keeps full utility for a small security drop\n(it misses only UNTRUSTED_TO_ACTION, "
+             "the attack that never scored). A benchmark scoring one axis cannot see this.  Source: utility_probe.py",
+             ha="center", fontsize=7.2, color="#6b7280")
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    fig.savefig(path, bbox_inches="tight", facecolor="white")
+    print("wrote", path)
+
+
 if __name__ == "__main__":
-    print_frontier()
+    import sys
+    if "--plot" in sys.argv:
+        i = sys.argv.index("--plot")
+        plot(sys.argv[i+1]) if i+1 < len(sys.argv) and not sys.argv[i+1].startswith("-") else plot()
+    else:
+        print_frontier()

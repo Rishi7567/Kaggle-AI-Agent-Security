@@ -5,6 +5,9 @@
 #                       guardrails.optimal.Guardrail). It is NOT on PyPI; obtain it from the
 #                       competition and point the tools at it with:  export AAS_SDK=/path/to/sdk
 #
+# Optional — only for `python utility_probe.py --plot` (renders figures/security_utility.png):
+#   matplotlib
+#
 # Optional — only for the live check in faithful_measure.py (needs a GPU + the GGUF models):
 #   llama-cpp-python
 #   huggingface_hub
