@@ -27,6 +27,8 @@ principles: run `audit.py` and it derives, automatically, that the private board
 | `examples.ipynb` | Runs `audit.py` on the SDK and walks through reading the report. |
 | `repair.py` | Applies the three fixes (structured authorization, elicitation scoring, full-argument content checks) and re-runs the audit against the patched scorer: the multi-step route reopens, the benign traces come back clean, and the single-send shortcut stops paying. |
 | `leaderboard_stats.py` | The one online tool: pulls both leaderboards and reports whether the public board predicted the private one (needs the Kaggle CLI). |
+| `test_wall_ladder.py` | 63 checks: the numbers this repo publishes, the general-benchmark path, and the edge cases (malformed evaluators, odd guardrails, empty and exploding spaces). No pytest needed. |
+| `examples/tiny_benchmark.py` | The same machinery on an unrelated benchmark, to show the tooling is not shaped around one SDK. |
 | `docs/method.md` | The full proofs behind the working note: Lemma 1 (taint window ⊇ predicate window), Lemma 2 (secret self-cancel), the guardrail-class definitions, the cell arithmetic, and the exact reproduction recipe. |
 
 ## Run it
@@ -60,10 +62,49 @@ VERDICT: private score is driven by CONFUSED_DEPUTY — reachable-under-strict A
 ```
 
 ## Using it on *your* benchmark
-Swap in your predicate logic (anything with `eval_predicates(trace) -> [{"predicate","severity"}]`) and your guardrail
-(anything with `decide(tool, args, ctx) -> allow/deny`), add your predicates' minimal arming traces to
-`wall_ladder.ARMING`, and re-run `audit.py`. The reachability matrix and the false-positive flags fall out automatically —
-a cheap sanity check that your benchmark rewards attacking the agent, not the scorer.
+
+Nothing here is welded to the competition it came from. A search is four things, and all four are
+arguments rather than edits:
+
+| You supply | Shape | Passed as |
+|---|---|---|
+| **Your scoring rules** | `evaluator(trace) -> [{"predicate", "severity"}, ...]` | `evaluator=` |
+| **Your defense classes** | objects with `.name`, `.window`, `.gated`, `.decide(tool, args, ctx)` | `walls=` |
+| **Your failure space** | `{axis name: values}` | `axes=` |
+| **How a point becomes a trace** | `builder(combo) -> {"steps", "last_user"}` or `None` to skip | `builder=` |
+
+```python
+from wall_ladder import generate_recipes, search_report, print_search_report
+
+recipes = generate_recipes(axes=MY_AXES, builder=my_build, max_fillers=None)
+report  = search_report(recipes=recipes, walls=MY_WALLS,
+                        evaluator=my_evaluator, weights=MY_WEIGHTS,
+                        axes=MY_AXES, builder=my_build)
+print_search_report(report)
+```
+
+`examples/tiny_benchmark.py` is a complete worked example on a coding-assistant benchmark that shares
+no tools, predicates or guardrails with this competition — copy it and replace those four things.
+
+**Things worth knowing before you extend it.**
+
+- `.decide` may return a bool, a string (`"allow"` / `"deny"`), or an SDK `DecisionAction`. Anything
+  unrecognised raises rather than silently denying, because a typo that blocks everything looks
+  exactly like a working strict guardrail.
+- A wall is only consulted about the tools in its `.gated` set. Declare it, or the guardrail is never
+  asked and every wall will look identical.
+- With a custom `builder`, `axes` **replaces** the default space; with the default builder it
+  **overrides** individual axes. `effective_axes()` tells you which space you are about to search.
+- Recipes that produce identical traces are deduplicated, so the reported total is the number of
+  *distinct* traces screened, not the size of the cartesian product.
+- The space is guarded at `MAX_SPACE` (200,000) combinations; raise it deliberately if you mean to.
+- Always include a no-defense wall. A predicate that cannot fire even with nothing blocking it is a
+  bug in your recipes, not a property of your guardrail.
+- The competition SDK is imported lazily, so the module works with none of it installed as long as
+  you bring your own evaluator and walls.
+
+Run `python test_wall_ladder.py` after any change: 63 checks covering the published numbers, the
+generality path, and the edge cases.
 
 ## Scope & responsible use
 Everything here operates on a security *benchmark's* own predicate and guardrail definitions and synthetic fixtures. It
