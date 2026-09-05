@@ -85,7 +85,7 @@ REPORT_WALLS = [AllowAll()] + DEFAULT_WALLS
 # A step is: {"name","args","source","side_effect"}. Reads are never gated; the
 # guardrail only decides dangerous ops. ok=False steps are recorded but score nothing.
 # ---------------------------------------------------------------------------
-def replay(steps, last_user_msg, guardrail):
+def replay(steps, last_user_msg, guardrail, authorized=None):
     # `last_user_msg` may be a single string or the full list of user messages. The
     # CONFUSED_DEPUTY / UNTRUSTED_TO_ACTION predicates read user_msgs[-1] ONLY, so the
     # message count and which message carries the naming tokens is a real search axis.
@@ -103,6 +103,10 @@ def replay(steps, last_user_msg, guardrail):
         if ok:
             recent.append(st.get("source", "tool"))
     trace = {"tool_events": events, "user_messages": msgs}
+    if authorized is not None:
+        # Structured intent: which tools the user's request actually authorizes. The shipped
+        # predicates ignore this field; repair.py uses it instead of guessing from text.
+        trace["authorized_actions"] = list(authorized)
     return trace
 
 def fired(trace):
