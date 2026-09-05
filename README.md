@@ -25,6 +25,8 @@ principles: run `audit.py` and it derives, automatically, that the private board
 | `experiments/` | Supporting evidence for the write-up's throughput study — the `CONFUSED_DEPUTY` engine we submitted + the private-score screenshot (single-send ~25 beats packing ~15). |
 | `faithful_measure.py` | The one measurement rule that saves days: drive the packaged model server via `RemoteAgent`, not the agent class directly (which fires 0 tool calls). Prints guidance; runs a live check only where the GGUF models + a GPU exist. |
 | `examples.ipynb` | Runs `audit.py` on the SDK and walks through reading the report. |
+| `repair.py` | Applies the three fixes (structured authorization, elicitation scoring, full-argument content checks) and re-runs the audit against the patched scorer: the multi-step route reopens, the benign traces come back clean, and the single-send shortcut stops paying. |
+| `leaderboard_stats.py` | The one online tool: pulls both leaderboards and reports whether the public board predicted the private one (needs the Kaggle CLI). |
 | `docs/method.md` | The full proofs behind the working note: Lemma 1 (taint window ⊇ predicate window), Lemma 2 (secret self-cancel), the guardrail-class definitions, the cell arithmetic, and the exact reproduction recipe. |
 
 ## Run it

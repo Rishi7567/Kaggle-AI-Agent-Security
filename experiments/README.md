@@ -4,7 +4,7 @@ This folder is **not** part of the audit toolkit; it is the empirical record beh
 benchmark-internal (synthetic RFC-2606 `.invalid` recipients, the benchmark's placeholder marker) — not an exploit
 against any real system.
 
-## 1. Our actual competition selections (official result: 6.5 private, rank 352 / 4,251)
+## 1. Our actual competition selections (official result: 6.475 private, rank 350 / 4,187)
 
 The two submissions we *selected* at the deadline — and the ones the write-up critiques in §7:
 
