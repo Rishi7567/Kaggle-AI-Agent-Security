@@ -21,10 +21,11 @@ principles: run `audit.py` and it derives, automatically, that the private board
 | `breach_faithfulness.py` | The linter: builds a benign, user-authorized trace per predicate and flags any that fire (false positives). |
 | `wall_ladder.py` | The shared engine: guardrail variants (`public-optimal`, `taint-only`, `taint+content`), a faithful mini-replayer, and an offline recipe search. Import it to test your own attack recipes. |
 | `scoring_math.py` | Proves, with the real scorer components, why the unique-cell bonus is *per candidate* — so `k` separate sends (`6k`) beat one `k`-send candidate (`4k+2`). Explains why the winning engines used one send per candidate. |
-| `utility_probe.py` | The dimension no one measured: scores a guardrail's **cost**, not just its security — on the security × utility frontier — attacks blocked *and* benign user-workflows preserved. Shows the strict guardrail that best resists attacks also breaks legitimate agent work. `--plot` renders the scatter (`figures/security_utility.png`). |
+| `utility_probe.py` | The dimension nobody measured: scores a guardrail's **cost**, not just its security — on the security × utility frontier — attacks blocked *and* benign user-workflows preserved. Shows the strict guardrail that best resists attacks also breaks legitimate agent work. `--plot` renders the scatter (`figures/security_utility.png`). |
 | `experiments/` | Supporting evidence for the write-up's throughput study — the `CONFUSED_DEPUTY` engine we submitted + the private-score screenshot (single-send ~25 beats packing ~15). |
 | `faithful_measure.py` | The one measurement rule that saves days: drive the packaged model server via `RemoteAgent`, not the agent class directly (which fires 0 tool calls). Prints guidance; runs a live check only where the GGUF models + a GPU exist. |
 | `examples.ipynb` | Runs `audit.py` on the SDK and walks through reading the report. |
+| `docs/method.md` | The full proofs behind the working note: Lemma 1 (taint window ⊇ predicate window), Lemma 2 (secret self-cancel), the guardrail-class definitions, the cell arithmetic, and the exact reproduction recipe. |
 
 ## Run it
 
