@@ -108,7 +108,42 @@ taint check, that kills them.
 
 ---
 
-## 5. Scoring arithmetic — why packing loses
+## 5. Format-dependent attackability (an untested prediction)
+
+After a scored tool call the evaluator invokes a second generation — a cleanup turn whose tokens
+earn nothing and cost budget. Suppressing it is worth real throughput, and the two target models
+are not equally exposed to it.
+
+What the SDK shows is an asymmetry in how each format marks an assistant turn:
+
+- **gpt-oss speaks the harmony format**, where channel markers wrap *both* kinds of turn: a tool
+  call is `<|channel|>commentary…<|message|>…` and a plain reply is `<|channel|>final<|message|>…`
+  (`aicomp_sdk/agents/gpt_oss_agent.py`, `_GPT_OSS_TOOL_CALL_PATTERN` and
+  `_GPT_OSS_FINAL_MESSAGE_PATTERN`).
+- **gemma marks only tool calls** — `<|tool_call>call:name{…}<tool_call|>`
+  (`aicomp_sdk/agents/gemma4_agent.py`, `_GEMMA4_TOOL_CALL_PATTERN`). A content turn carries no
+  wrapper at all.
+
+So on the cleanup turn, the format gemma was trained to speak lets it answer with bare text, while
+the one gpt-oss speaks opens with structural tokens. The prediction: an end-of-generation token
+should sit closer to the top of gemma's distribution than gpt-oss's, making the cleanup turn
+**cheaper to suppress on gemma**.
+
+**Two limits, stated plainly.** Both parsers fall through to `FinalResponseDecision(text=stripped)`
+when their pattern does not match, so bare text is accepted from *either* model — this is a claim
+about what each model is likely to emit given the format it was trained on, not about what the
+harness requires. And confirming it needs the model weights and a logit readout, which this work
+did not have. It is recorded as a testable prediction, not a result.
+
+**Why a designer should care anyway.** If it holds, the cleanup-turn tax is a property of the
+tool-call format's *rigidity* rather than the model's capability: a grammar-constrained format is
+incidentally a mild throughput-attack mitigation and a free-form one is exposed. That would mean
+part of a leaderboard's spread reflects which grammar a target happens to speak. The fix is
+independent of whether the prediction is true: **score at hop-1 and discard the cleanup turn.**
+
+---
+
+## 6. Scoring arithmetic — why packing loses
 
 `scoring_math.py` computes this against the real `cell_signature`:
 
@@ -125,7 +160,7 @@ Packing is structurally worse before timing enters the picture at all.
 
 ---
 
-## 6. Reproducing the measurements
+## 7. Reproducing the measurements
 
 **The harness rule that invalidates most local work.** Constructing the agent object directly fires **zero**
 tool calls. Measurements must go through the model-server path:
