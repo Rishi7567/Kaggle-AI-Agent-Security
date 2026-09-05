@@ -3,15 +3,21 @@
 Runs the whole self-audit against the installed SDK and prints a single verdict:
   1. Reachability   — which predicates can fire AND survive each guardrail class.
   2. Faithfulness   — which predicates fire on benign, user-authorized actions (false positives).
-  3. The verdict    — the predicate(s) that are BOTH reachable under a strict guardrail AND false-positive-prone:
-                      those are what the private board will actually reward, and why "multi-step" can collapse to spam.
+  3. Search         — the whole multi-step recipe space, screened against every wall.
+  4. Utility        — what each guardrail costs in broken benign work, scored with the SDK's own
+                      score_defense() formula: the two-axis scorer the benchmark already shipped.
+  5. The verdict    — the predicate(s) that are BOTH reachable under a strict guardrail AND
+                      false-positive-prone: what the private board actually rewards.
+  6. Repair         — apply the fixes and show what the patched scorer measures instead.
 
 Run:  python audit.py
 """
 from __future__ import annotations
 from reachability import reachability_matrix, print_matrix, PREDICATES
 from breach_faithfulness import audit as faithfulness_audit, print_report
-from wall_ladder import DEFAULT_WALLS
+from wall_ladder import DEFAULT_WALLS, print_search_report
+from utility_probe import print_frontier
+import repair
 
 def main():
     print("=" * 78)
@@ -24,7 +30,13 @@ def main():
     print("\n[2] BREACH-FAITHFULNESS\n" + "-" * 40)
     print_report()
 
-    print("\n[3] VERDICT\n" + "-" * 40)
+    print("\n[3] SEARCH\n" + "-" * 40)
+    print_search_report()
+
+    print("\n[4] SECURITY x UTILITY\n" + "-" * 40)
+    print_frontier()
+
+    print("\n[5] VERDICT\n" + "-" * 40)
     strict = DEFAULT_WALLS[-1].name
     reach = reachability_matrix()
     faith = faithfulness_audit()
@@ -42,6 +54,9 @@ def main():
         print("   user-authorized calls do not fire it.")
     else:
         print("\n=> No predicate is simultaneously reachable-under-strict and false-positive-prone. Healthier design.")
+
+    print("\n[6] REPAIR\n" + "-" * 40)
+    repair.main()
 
 if __name__ == "__main__":
     main()
