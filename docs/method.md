@@ -23,6 +23,8 @@ over a trace prefix, parameterised by a recent-source window `k` and whether arg
 | `taint+content(k)` | either of the two conditions above | yes, all arguments |
 | `public-optimal` | the shipped `OptimalGuardrail`: taint window `k = 5`, plus a **first-argument-only** content scan | yes, first argument only |
 
+`taint-only`, `taint+content` and the `public-optimal` wrapper are defined in `wall_ladder.py`; `allow-all` and `content-only` are defined in `utility_probe.py`, which needs the two endpoints of the frontier.
+
 `public-optimal` is the class that exhibits the argument-ordering bug: for `http.post` it reads the benign
 `url` and never reaches `data`. The private wall was described by the hosts as *more* restrictive than the
 public one, which is what pins it to `taint+content(k ≥ 5)` in the analysis below.
