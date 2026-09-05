@@ -16,20 +16,8 @@ security, because taint is what breaks the benign work.
 Run:  python utility_probe.py
 """
 from __future__ import annotations
-from wall_ladder import (replay, fired, DANGEROUS, ARMING,
+from wall_ladder import (replay, fired, DANGEROUS, ARMING, AllowAll, ContentOnly,
                          TaintOnly, TaintContent, _PublicOptimalWrap, _any_arg_has_secret)
-from aicomp_sdk.guardrails.base import DecisionAction
-
-
-class AllowAll:
-    name, window = "allow-all", 5
-    def decide(self, tool, args, ctx): return DecisionAction.ALLOW
-
-class ContentOnly:
-    """Blocks secret CONTENT in any argument, but does NOT taint-block read-then-act. No taint window."""
-    name, window = "content-only", 5
-    def decide(self, tool, args, ctx):
-        return DecisionAction.DENY if (tool in DANGEROUS and _any_arg_has_secret(args)) else DecisionAction.ALLOW
 
 WALLS = [AllowAll(), ContentOnly(), TaintOnly(5), TaintContent(5), _PublicOptimalWrap()]
 
